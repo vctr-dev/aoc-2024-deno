@@ -1,6 +1,9 @@
 {
   "tasks": {
-    "dev": "deno run --watch --allow-read ./main.ts"
+    "dev": {
+      "description": "Runs day xx with input|example.\nUsage: `deno run dev <xx> <input|example>`",
+      "command": "deno run --watch --allow-read ./main.ts"
+    }
   },
   "imports": {}
 }
