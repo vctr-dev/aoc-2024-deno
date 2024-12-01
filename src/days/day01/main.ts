@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { makeMap, sum } from "../../utils.ts";
 
 export default async function (inputPath: string) {
   const input = await fs.readFile(inputPath, { encoding: "utf-8" });
@@ -10,25 +11,9 @@ export default async function (inputPath: string) {
   console.log(`Part 1: ${z}`);
 
   // Part 2
-  const dict = makeDict(y);
-  const r = sum(x.map((v) => v * (dict[v] || 0)));
+  const map = makeMap(y);
+  const r = sum(x.map((v) => v * (map.get(v) ?? 0)));
   console.log(`Part 2: ${r}`);
-}
-
-function makeDict(input: number[]) {
-  const dict: Record<number, number> = {};
-  input.forEach((v) => {
-    if (dict[v]) {
-      dict[v] = dict[v] + 1;
-    } else {
-      dict[v] = 1;
-    }
-  });
-  return dict;
-}
-
-function sum(arr: number[]) {
-  return arr.reduce((a, v) => a + v, 0);
 }
 
 function parseInput(input: string) {
