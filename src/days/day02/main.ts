@@ -1,15 +1,16 @@
 import fs from "node:fs/promises";
+import { checkPrevious } from "../../utils.ts";
 
 export default async function (inputPath: string) {
   const input = await fs.readFile(inputPath, { encoding: "utf-8" });
   const parsed = parseInput(input);
   // Part 1
-  // const r = parsed.filter((v) => check(v));
-  // console.log(r.length);
+  const r = parsed.filter((v) => check(v));
+  console.log(`Part 1: ${r.length}`);
 
   // Part 2
-  const r = parsed.filter((v) => checkWithRemove(v));
-  console.log(r.length);
+  const s = parsed.filter((v) => checkWithRemove(v));
+  console.log(`Part 1: ${s.length}`);
 }
 
 function parseInput(input: string) {
@@ -17,25 +18,6 @@ function parseInput(input: string) {
     .trim()
     .split("\n")
     .map((v) => v.split(" ").map((v) => ~~v));
-}
-
-function checker(input: number[], check: (a: number, b: number) => boolean) {
-  for (let i = 1; i < input.length; i++) {
-    if (!check(input[i - 1], input[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
-function increase(input: number[]) {
-  return checker(input, (a, b) => a > b);
-}
-function difference(input: number[]) {
-  return checker(input, (a, b) => {
-    const diff = Math.abs(a - b);
-    return diff >= 1 && diff <= 3;
-  });
 }
 
 function checkWithRemove(input: number[]) {
@@ -49,5 +31,15 @@ function checkWithRemove(input: number[]) {
 }
 
 function check(input: number[]) {
-  return difference(input) && (increase(input) || increase(input.reverse()));
+  return isDist(input) && (isIncrease(input) || isIncrease(input.reverse()));
+}
+
+function isIncrease(input: number[]) {
+  return checkPrevious(input, (prev, next) => prev > next);
+}
+function isDist(input: number[]) {
+  return checkPrevious(input, (prev, next) => {
+    const diff = Math.abs(prev - next);
+    return diff >= 1 && diff <= 3;
+  });
 }

@@ -5,3 +5,15 @@ export function makeMap<T>(input: T[]): Map<T, number> {
 export function sum(arr: number[]) {
   return arr.reduce((a, v) => a + v, 0);
 }
+
+export function checkPrevious(
+  input: number[],
+  check: (prev: number, next: number) => boolean
+) {
+  for (let i = 1; i < input.length; i++) {
+    if (!check(input[i - 1], input[i])) {
+      return false;
+    }
+  }
+  return true;
+}
