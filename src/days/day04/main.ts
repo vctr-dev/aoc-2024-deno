@@ -11,7 +11,7 @@ export default async function (inputPath: string) {
   // countMatrix
   // Find diagonals
   res.push(countMatrix(makeDiagonalMatrix(parsed)));
-  res.push(countMatrix(makeDiagonalMatrix(mirrorX(parsed))));
+  res.push(countMatrix(makeDiagonalMatrix(flipX(parsed))));
 
   // Make matrix diagonal
   // Count
@@ -23,7 +23,7 @@ export default async function (inputPath: string) {
   const res2: number[] = [];
   const mask = ["M S", " A ", "M S"].map((v) => v.split(""));
   const mask2 = transposeMatrix(mask);
-  const mask3 = mirrorX(mask);
+  const mask3 = flipX(mask);
   const mask4 = transposeMatrix(mask3);
   const masks = [mask, mask2, mask3, mask4];
   masks.forEach((m) => res2.push(countMask(parsed, m)));
@@ -97,7 +97,7 @@ function generateRowIndexes(
   return indexes;
 }
 
-function mirrorX<T>(m: T[][]) {
+function flipX<T>(m: T[][]) {
   return m.map((r) => r.toReversed());
 }
 
