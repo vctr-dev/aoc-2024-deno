@@ -7,7 +7,7 @@ export default async function (inputPath: string) {
   // Find horizontals
   res.push(countMatrix(parsed));
   // Find verticals
-  res.push(countMatrix(rotateMatrix(parsed)));
+  res.push(countMatrix(transposeMatrix(parsed)));
   // countMatrix
   // Find diagonals
   res.push(countMatrix(makeDiagonalMatrix(parsed)));
@@ -22,9 +22,9 @@ export default async function (inputPath: string) {
   // Part 2
   const res2: number[] = [];
   const mask = ["M S", " A ", "M S"].map((v) => v.split(""));
-  const mask2 = rotateMatrix(mask);
+  const mask2 = transposeMatrix(mask);
   const mask3 = mirrorX(mask);
-  const mask4 = rotateMatrix(mask3);
+  const mask4 = transposeMatrix(mask3);
   const masks = [mask, mask2, mask3, mask4];
   masks.forEach((m) => res2.push(countMask(parsed, m)));
   console.log("Part 2: " + sum(res2));
@@ -47,7 +47,7 @@ function countMatrix(m: string[][]) {
   return b;
 }
 
-function rotateMatrix<T>(m: T[][]) {
+function transposeMatrix<T>(m: T[][]) {
   const newMatrix: T[][] = [];
   m.forEach(() => newMatrix.push([]));
   m.forEach((r, y) => {
