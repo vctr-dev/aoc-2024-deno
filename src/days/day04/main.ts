@@ -3,23 +3,17 @@ export default async function (inputPath: string) {
   const input = await Deno.readTextFile(inputPath);
   const parsed = parseInput(input);
   const res: number[][] = [];
-  // Part 1
+
   // Find horizontals
   res.push(countMatrix(parsed));
   // Find verticals
   res.push(countMatrix(transposeMatrix(parsed)));
-  // countMatrix
   // Find diagonals
   res.push(countMatrix(makeDiagonalMatrix(parsed)));
   res.push(countMatrix(makeDiagonalMatrix(flipX(parsed))));
 
-  // Make matrix diagonal
-  // Count
-  // Make matrix diagonal
-  // Count
   console.log("Part 1: " + sum(res.flat()));
 
-  // Part 2
   const res2: number[] = [];
   const mask = ["M S", " A ", "M S"].map((v) => v.split(""));
   const mask2 = transposeMatrix(mask);
