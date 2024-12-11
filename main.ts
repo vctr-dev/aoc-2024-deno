@@ -6,4 +6,7 @@ const datasourceFile = `${importPath}/${datasource}`;
 console.table({ programFile, datasourceFile });
 
 const { default: program } = await import(programFile);
-program(datasourceFile);
+const start = performance.now();
+await program(datasourceFile);
+const end = performance.now();
+console.log("Finished in", (end - start).toFixed(3), "ms");
