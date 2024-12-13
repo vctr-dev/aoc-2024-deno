@@ -1,149 +1,163 @@
+const DIRECTIONS = [];
 export default async function (inputPath: string) {
   const input = await Deno.readTextFile(inputPath);
   const parsed = parseInput(input);
-  const map = new Map<string, { p: V; v: string }>();
-  parsed.forEach((r, y) => {
-    r.forEach((v, x) => {
-      const p = new V(x, y);
-      map.set(p.toString(), { p, v });
-    });
-  });
-
-  const connections = new Map<string, Set<string>>();
-  let orphansCount = 0;
-  map.values().forEach(({ p, v }) => {
-    const adj = p.getNeigh();
-    const astr = p.toString();
-    adj.forEach((adjP) => {
-      const bstr = adjP.toString();
-
-      const { v: adjV } = map.get(bstr) ?? {};
-      if (adjV !== v) return;
-
-      [[astr, bstr], [bstr, astr]].forEach(([a, b]) => {
-        connections.get(a)?.add(b) ??
-          connections.set(a, new Set([b]));
-      });
-    });
-    if (!connections.has(astr)) {
-      orphansCount++;
-    }
-  });
-
-  // Part 1
-  console.log("p1:", getPartOneResult(connections) + orphansCount * 4);
-
-  // Part 2
-  console.log("p2:", getPartTwoResults(connections) + orphansCount * 4);
-}
-
-function getPartTwoResults(connections: Map<string, Set<string>>) {
-  const processed = new Set<string>();
-  let res = 0;
-  connections.keys().forEach((p) => {
-    if (processed.has(p)) return;
-
-    // Group start
-    const stack = [p];
-    let area = 0;
-    const fences: { p: V; d: D }[] = [];
-    while (stack.length) {
-      const a = stack.pop();
-      if (!a) throw new Error("Invalid state 1");
-      if (processed.has(a)) continue;
-      processed.add(a);
-      const c = connections.get(a);
-      if (!c) throw new Error("Invalid state 2");
-      stack.push(...c);
-
-      // Process node of a group
-      area++;
-      // gather fence information
-      const f = new Set<D>();
-      const aV = V.fromString(a);
-      const newSet = new Set([D.Top, D.Bottom, D.Left, D.Right]);
-      c.forEach((v) => newSet.delete(aV.dir(V.fromString(v))));
-      fences.push(...newSet.values().map((v) => ({ d: v, p: aV })));
-    }
-    // Group end
-
-    const conseqSides = numConseqSides(fences);
-    console.log({ area, conseqSides });
-    res += area * conseqSides;
-  });
-  return res;
-}
-
-function numConseqSides(fenceInfo: { p: V; d: D }[]) {
-  const group = Map.groupBy(
-    fenceInfo,
-    (v) => v.d,
-  );
-  // Check up
+  const groups = getFenceGroup(parsed);
   let sum = 0;
-  getRows(group.get(D.Top) ?? [], (v) => v.y, (v) => v.x).forEach((v) => {
-    sum += numSections(v);
+  groups.forEach((group) => {
+    sum += getArea(group) * getNonDiscountedParameter(group);
   });
-  getRows(group.get(D.Bottom) ?? [], (v) => v.y, (v) => v.x).forEach((v) => {
-    sum += numSections(v);
-  });
-  getRows(group.get(D.Left) ?? [], (v) => v.x, (v) => v.y).forEach((v) => {
-    sum += numSections(v);
-  });
-  getRows(group.get(D.Right) ?? [], (v) => v.x, (v) => v.y).forEach((v) => {
-    sum += numSections(v);
-  });
+  console.log("p1:", sum);
 
-  return sum;
+  let sumPart2 = 0;
+  groups.forEach((group) => {
+    const id = group[0].id;
+    const p = getDiscountedParameter(group);
+    const a = getArea(group);
+    sumPart2 += a * p;
+  });
+  console.log("p2:", sumPart2);
 }
 
-function getRows(
-  input: { p: V; d: D }[],
-  cross: (p: V) => number,
-  straight: (p: V) => number,
-) {
-  return Map.groupBy(input, (v) => cross(v.p)).values().map((v) =>
-    v.map((v) => straight(v.p)).toSorted()
+function getDiscountedParameter(group: { d: D; p: V }[]) {
+  const fences = getFences(group);
+  const fenceMap = Map.groupBy(fences, (v) => v.d);
+  // calculate top
+  const numTop = [
+    ...Map.groupBy(fenceMap.get(D.Top)!.map(({ p }) => p), (v) => v.y)
+      .values(),
+  ].map((v) => v.map((p) => p.x).toSorted((a, b) => a - b)).map((v) =>
+    numConseq(v)
+  ).reduce(
+    (a, v) => a + v,
+    0,
   );
+
+  // calculate bottom
+  const numBot = [
+    ...Map.groupBy(fenceMap.get(D.Bottom)!.map(({ p }) => p), (v) => v.y)
+      .values(),
+  ].map((v) => v.map((p) => p.x).toSorted((a, b) => a - b)).map((v) =>
+    numConseq(v)
+  ).reduce(
+    (a, v) => a + v,
+    0,
+  );
+
+  // calculate left
+  const numLeft = [
+    ...Map.groupBy(fenceMap.get(D.Left)!.map(({ p }) => p), (v) => v.x)
+      .values(),
+  ].map((v) => v.map((p) => p.y).toSorted((a, b) => a - b)).map((v) =>
+    numConseq(v)
+  ).reduce(
+    (a, v) => a + v,
+    0,
+  );
+  // calculate right
+  const numRight = [
+    ...Map.groupBy(fenceMap.get(D.Right)!.map(({ p }) => p), (v) => v.x)
+      .values(),
+  ].map((v) => v.map((p) => p.y).toSorted((a, b) => a - b)).map((v) =>
+    numConseq(v)
+  ).reduce(
+    (a, v) => a + v,
+    0,
+  );
+  return [D.Top, D.Bottom, D.Left, D.Right].map((d) =>
+    getNumSections(fenceMap, d)
+  ).reduce((a, v) => a + v, 0);
 }
 
-function numSections(v: number[]) {
-  let ret = 1;
+function getNumSections(fenceMap: Map<D, { p: V; d: D }[]>, d: D) {
+  const cross = (d === D.Left || d === D.Right) ? (v: V) => v.y : (v: V) => v.x;
+  const straight = (d === D.Left || d === D.Right)
+    ? (v: V) => v.x
+    : (v: V) => v.y;
+  return [
+    ...Map.groupBy(fenceMap.get(d)!.map(({ p }) => p), straight)
+      .values(),
+  ].map((v) => v.map(cross).toSorted((a, b) => a - b)).map((v) => numConseq(v))
+    .reduce(
+      (a, v) => a + v,
+      0,
+    );
+}
+
+function numConseq(v: number[]) {
+  let r = 1;
   for (let i = 1; i < v.length; i++) {
     if (v[i] - v[i - 1] > 1) {
-      ret++;
+      r++;
     }
   }
-  return ret;
+  return r;
 }
 
-function getPartOneResult(connections: Map<string, Set<string>>) {
-  const processed = new Set<string>();
-  let res = 0;
-  connections.keys().forEach((p) => {
-    if (processed.has(p)) return;
-    const stack = [p];
-    let area = 0;
-    let parameter = 0;
-    while (stack.length) {
-      const a = stack.pop();
-      if (!a) throw new Error("Invalid state 1");
-      if (processed.has(a)) continue;
-      processed.add(a);
-      const c = connections.get(a);
-      if (!c) throw new Error("Invalid state 2");
-      area++;
-      parameter += 4 - c.size;
-      stack.push(...c);
-    }
-    res += area * parameter;
+function getNonDiscountedParameter(group: { d: D; p: V }[]) {
+  return getFences(group).length;
+}
+function getFences(group: { d: D; p: V }[]) {
+  return group.filter(({ d }) => d !== D.None);
+}
+function getArea(group: { d: D; p: V }[]) {
+  return (new Set([
+    ...group.map((v) => v.p.toString()),
+  ])).size;
+}
+
+function getFenceGroup(map: Map<string, { p: V; v: string }>) {
+  const connections: Map<string, Set<string>> = new Map(
+    map.keys().map((k) => [k, new Set()]),
+  );
+  map.entries().forEach(([astr, { v, p }]) => {
+    p.getNeigh().forEach((n) => {
+      const bstr = n.toString();
+      const { v: nv } = map.get(bstr) || {};
+      if (!nv) return;
+
+      if (v === nv) {
+        connections.get(astr)!.add(bstr);
+        connections.get(bstr)!.add(astr);
+      }
+    });
   });
-  return res;
-}
 
+  const processed = new Set();
+  const groups: { d: D; p: V; id: string }[][] = [];
+  connections.keys().forEach((k) => {
+    if (processed.has(k)) return;
+    const stack = [k];
+    const group: { d: D; p: V; id: string }[] = [];
+    const seen = new Set<string>();
+    while (stack.length > 0) {
+      const item = stack.pop()!;
+      const id = map.get(item)!.v;
+      seen.add(item);
+      processed.add(item);
+      const iP = V.fromString(item);
+      const c = [...connections.get(item)!.values()];
+      stack.push(...c.filter((v) => !seen.has(v) && !stack.includes(v)));
+      const dirs = c.map((p) => V.fromString(p)).map((p) => iP.dir(p));
+      const fences = (new Set([D.Bottom, D.Top, D.Right, D.Left, D.None]))
+        .difference(
+          new Set(dirs),
+        );
+      fences.forEach((f) => group.push({ d: f, p: iP, id }));
+    }
+    groups.push(group);
+  });
+  return groups;
+}
 function parseInput(input: string) {
-  return input
-    .trim().split("\n").map((v) => v.split(""));
+  const collector = new Map<string, { v: string; p: V }>();
+  input.trim().split("\n").map((r, y) =>
+    r.split("").forEach((v, x) => {
+      const p = new V(x, y);
+      collector.set(p.toString(), { v, p });
+    })
+  );
+  return collector;
 }
 
 enum D {
