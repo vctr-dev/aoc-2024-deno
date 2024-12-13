@@ -1,4 +1,3 @@
-const DIRECTIONS = [];
 export default async function (inputPath: string) {
   const input = await Deno.readTextFile(inputPath);
   const parsed = parseInput(input);
@@ -11,20 +10,23 @@ export default async function (inputPath: string) {
 
   let sumPart2 = 0;
   groups.forEach((group) => {
-    const id = group[0].id;
     const p = getDiscountedParameter(group);
     const a = getArea(group);
     sumPart2 += a * p;
   });
   console.log("p2:", sumPart2);
 }
+function getDirections(includeNone = false) {
+  return [D.Top, D.Bottom, D.Left, D.Right, ...(includeNone ? [D.None] : [])];
+}
 
 function getDiscountedParameter(group: { d: D; p: V }[]) {
   const fences = getFences(group);
   const fenceMap = Map.groupBy(fences, (v) => v.d);
-  return [D.Top, D.Bottom, D.Left, D.Right].map((d) =>
-    getNumSections(fenceMap, d)
-  ).reduce((a, v) => a + v, 0);
+  return getDirections().map((d) => getNumSections(fenceMap, d)).reduce(
+    (a, v) => a + v,
+    0,
+  );
 }
 
 function getNumSections(fenceMap: Map<D, { p: V; d: D }[]>, d: D) {
@@ -97,7 +99,7 @@ function getFenceGroup(map: Map<string, { p: V; v: string }>) {
       const c = [...connections.get(item)!.values()];
       stack.push(...c.filter((v) => !seen.has(v) && !stack.includes(v)));
       const dirs = c.map((p) => V.fromString(p)).map((p) => iP.dir(p));
-      const fences = (new Set([D.Bottom, D.Top, D.Right, D.Left, D.None]))
+      const fences = (new Set(getDirections(true)))
         .difference(
           new Set(dirs),
         );
