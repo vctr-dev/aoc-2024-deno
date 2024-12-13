@@ -22,48 +22,6 @@ export default async function (inputPath: string) {
 function getDiscountedParameter(group: { d: D; p: V }[]) {
   const fences = getFences(group);
   const fenceMap = Map.groupBy(fences, (v) => v.d);
-  // calculate top
-  const numTop = [
-    ...Map.groupBy(fenceMap.get(D.Top)!.map(({ p }) => p), (v) => v.y)
-      .values(),
-  ].map((v) => v.map((p) => p.x).toSorted((a, b) => a - b)).map((v) =>
-    numConseq(v)
-  ).reduce(
-    (a, v) => a + v,
-    0,
-  );
-
-  // calculate bottom
-  const numBot = [
-    ...Map.groupBy(fenceMap.get(D.Bottom)!.map(({ p }) => p), (v) => v.y)
-      .values(),
-  ].map((v) => v.map((p) => p.x).toSorted((a, b) => a - b)).map((v) =>
-    numConseq(v)
-  ).reduce(
-    (a, v) => a + v,
-    0,
-  );
-
-  // calculate left
-  const numLeft = [
-    ...Map.groupBy(fenceMap.get(D.Left)!.map(({ p }) => p), (v) => v.x)
-      .values(),
-  ].map((v) => v.map((p) => p.y).toSorted((a, b) => a - b)).map((v) =>
-    numConseq(v)
-  ).reduce(
-    (a, v) => a + v,
-    0,
-  );
-  // calculate right
-  const numRight = [
-    ...Map.groupBy(fenceMap.get(D.Right)!.map(({ p }) => p), (v) => v.x)
-      .values(),
-  ].map((v) => v.map((p) => p.y).toSorted((a, b) => a - b)).map((v) =>
-    numConseq(v)
-  ).reduce(
-    (a, v) => a + v,
-    0,
-  );
   return [D.Top, D.Bottom, D.Left, D.Right].map((d) =>
     getNumSections(fenceMap, d)
   ).reduce((a, v) => a + v, 0);
