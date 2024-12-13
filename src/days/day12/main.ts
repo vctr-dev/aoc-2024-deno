@@ -2,18 +2,17 @@ export default async function (inputPath: string) {
   const input = await Deno.readTextFile(inputPath);
   const parsed = parseInput(input);
   const groups = getFenceGroup(parsed);
-  let sum = 0;
-  groups.forEach((group) => {
-    sum += getArea(group) * getNonDiscountedParameter(group);
-  });
-  console.log("p1:", sum);
 
+  let sum = 0;
   let sumPart2 = 0;
   groups.forEach((group) => {
-    const p = getDiscountedParameter(group);
+    const p1 = getNonDiscountedParameter(group);
+    const p2 = getDiscountedParameter(group);
     const a = getArea(group);
-    sumPart2 += a * p;
+    sum += a * p1;
+    sumPart2 += a * p2;
   });
+  console.log("p1:", sum);
   console.log("p2:", sumPart2);
 }
 function getDirections(includeNone = false) {
