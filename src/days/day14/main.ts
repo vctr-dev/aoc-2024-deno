@@ -38,7 +38,6 @@ export default async function (inputPath: string) {
     if (uniqPositions) {
       render(positions, width, height);
       prompt("next");
-      //console.clear();
     }
   }
 }
