@@ -9,6 +9,7 @@ export default async function (inputPath: string) {
   for (let i = 0; i < 10000000; i++) {
     robots.forEach((robot) => robot.tick());
     const positions = robots.map((r) => r.normalizedP(width, height));
+    console.clear();
     console.log("T:", i + 1);
     const topLeft = getQuad(
       positions,
@@ -31,12 +32,11 @@ export default async function (inputPath: string) {
       new V(width - 1, height - 1),
     ).length;
     const checksum1 = topLeft * topRight * botLeft * botRight;
-    // console.log("p1:", checksum1);
+    console.log("p1:", checksum1);
     const s = new Set<string>();
     positions.forEach((v) => s.add(v.toString()));
-    const uniqPositions = s.size === robots.length;
-    if (uniqPositions) {
-      render(positions, width, height);
+    render(positions, width, height);
+    if (s.size === robots.length) {
       prompt("next");
     }
   }
@@ -45,13 +45,15 @@ export default async function (inputPath: string) {
 function render(positions: V[], width: number, height: number) {
   const s = new Set<string>();
   positions.forEach((v) => s.add(v.toString()));
+  const lines = [];
   for (let y = 0; y < height; y++) {
     const line: string[] = [];
     for (let x = 0; x < width; x++) {
       line.push(s.has(`${x},${y}`) ? "■" : " ");
     }
-    console.log(line.join(""));
+    lines.push(line.join(""));
   }
+  console.log(lines.join("\n"));
 }
 
 function getQuad(positions: V[], lowerBound: V, upperBound: V) {
