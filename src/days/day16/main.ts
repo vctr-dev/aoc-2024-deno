@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import chalk from "npm:chalk";
-import { sleep } from "https://deno.land/x/sleep/mod.ts";
 
 type P = { x: number; y: number; v: string };
 
