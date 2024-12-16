@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import chalk from "npm:chalk";
+import { sleep } from "https://deno.land/x/sleep/mod.ts";
 
 type P = { x: number; y: number; v: string };
 
@@ -18,13 +19,14 @@ export default async function (inputPath: string) {
   assert(start);
   assert(end);
 
-  const { highScore, goodChairs } = search(start, end, lookup) || {};
+  const { highScore, goodChairs, seen } = await search(start, end, lookup) ||
+    {};
   // Part 1
   // checksum
   console.log(highScore);
   // Part 2
   console.log(goodChairs?.size);
-  console.log(render(lookup, goodChairs));
+  console.log(render(lookup, goodChairs, undefined, undefined, seen));
 }
 
 function render(
@@ -32,9 +34,11 @@ function render(
   visited?: Set<string>,
   highlight?: string,
   highlightIcon?: string,
+  visitedPast?: Set<string>,
 ) {
   const res: string[][] = [];
   const vis = new Set([...visited || []].map((v) => v.split(";")[0]));
+  const visPast = new Set([...visitedPast || []].map((v) => v.split(";")[0]));
   lookup.values().forEach(({ x, y, v }) => {
     const str = x + "," + y;
     if (!res[y]) {
@@ -43,9 +47,13 @@ function render(
     if (highlight && highlight === str) {
       res[y][x] = chalk.red.bold(highlightIcon);
     } else if (vis && vis.has(str)) {
-      res[y][x] = chalk.bold("O");
+      res[y][x] = chalk.red.bold("∘");
+    } else if (visPast && visPast.has(str)) {
+      res[y][x] = chalk.yellow.dim("∘");
+    } else if (v === ".") {
+      res[y][x] = chalk.black.bgBlack(".");
     } else {
-      res[y][x] = v;
+      res[y][x] = chalk.green.dim(v);
     }
   });
   const output = res.map((v) => v.join("")).join("\n");
@@ -58,7 +66,7 @@ enum D {
   W = "<",
   S = "v",
 }
-function search(
+async function search(
   start: string,
   end: string,
   lookup: Map<string, P>,
@@ -102,14 +110,21 @@ function search(
     }
     seen.add(str);
 
-    leftRight(dir).forEach((d) =>
-      stack.unshift({ points: points + 1000, pos, dir: d, visited })
-    );
+    const [x, y] = pos.split(",").map((v) => parseInt(v));
+    assert(x !== undefined && y !== undefined);
+
+    leftRight(dir).forEach((d) => {
+      const offset = getAheadVector(d);
+      const newPos = (x + offset.x) + "," + (y + offset.y);
+      const itemAtPos = lookup.get(newPos);
+      const isWall = !itemAtPos || itemAtPos.v === "#";
+      if (!isWall) {
+        stack.unshift({ points: points + 1000, pos, dir: d, visited });
+      }
+    });
 
     // Try moving ahead
     const offset = getAheadVector(dir);
-    const [x, y] = pos.split(",").map((v) => parseInt(v));
-    assert(x !== undefined && y !== undefined);
     const newPos = (x + offset.x) + "," + (y + offset.y);
     const itemAtPos = lookup.get(newPos);
 
@@ -120,7 +135,7 @@ function search(
     stack.sort((a, b) => b.points - a.points);
   }
   goodChairs = new Set([...goodChairs].map((v) => v.split(";")[0]));
-  return { highScore, goodChairs };
+  return { highScore, goodChairs, seen };
 }
 
 function leftRight(dir: D) {
@@ -139,10 +154,6 @@ function getAheadVector(dir: D) {
     case D.W:
       return { x: -1, y: 0 };
   }
-}
-
-function add(p: P, x: number, y: number) {
-  return { x: p.x + x, y: p.y + y };
 }
 
 function parseInput(input: string) {
