@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import chalk from "npm:chalk";
+import { sleep } from "https://deno.land/x/sleep/mod.ts";
 
 type P = { x: number; y: number; v: string };
 
@@ -44,11 +45,11 @@ function render(
       res[y] = [];
     }
     if (highlight && highlight === str) {
-      res[y][x] = chalk.red.bold(highlightIcon);
+      res[y][x] = chalk.blue.bold.bgBlue(highlightIcon);
     } else if (vis && vis.has(str)) {
-      res[y][x] = chalk.red.bold("∘");
+      res[y][x] = chalk.red.bold.bgRed("∘");
     } else if (visPast && visPast.has(str)) {
-      res[y][x] = chalk.yellow.dim("∘");
+      res[y][x] = chalk.yellow.bold.bgYellow("∘");
     } else if (v === ".") {
       res[y][x] = chalk.black.bgBlack(".");
     } else {
@@ -109,6 +110,10 @@ async function search(
     }
     seen.add(str);
 
+    // const output = render(lookup, new Set(visited.keys()), pos, dir, seen);
+    // console.log(output);
+    // await sleep(0.2);
+
     const [x, y] = pos.split(",").map((v) => parseInt(v));
     assert(x !== undefined && y !== undefined);
 
@@ -118,7 +123,7 @@ async function search(
       const itemAtPos = lookup.get(newPos);
       const isWall = !itemAtPos || itemAtPos.v === "#";
       if (!isWall) {
-        stack.unshift({ points: points + 1000, pos, dir: d, visited });
+        stack.unshift({ points: points + 1001, pos: newPos, dir: d, visited });
       }
     });
 
