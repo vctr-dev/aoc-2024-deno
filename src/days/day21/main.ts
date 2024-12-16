@@ -1,6 +1,12 @@
-import fs from "node:fs/promises";
-
 export default async function (inputPath: string) {
-  const input = await fs.readFile(inputPath, { encoding: "utf-8" });
-  console.log(input);
+  const input = await Deno.readTextFile(inputPath);
+  const parsed = parseInput(input);
+  console.log(parsed);
+  // Part 1
+  // Part 2
+}
+
+function parseInput(input: string) {
+  return input
+    .trim();
 }
