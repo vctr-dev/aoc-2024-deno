@@ -1,8 +1,12 @@
 import assert from "node:assert";
 import chalk from "npm:chalk";
-import { sleep } from "https://deno.land/x/sleep/mod.ts";
+import { sleep } from "https://deno.land/x/sleep@v1.3.0/mod.ts";
+import { BinaryHeap } from "https://deno.land/std@0.177.0/collections/binary_heap.ts";
 
 type P = { x: number; y: number; v: string };
+
+const showFinal = false;
+const showProgress = false;
 
 export default async function (inputPath: string) {
   const input = await Deno.readTextFile(inputPath);
@@ -26,7 +30,9 @@ export default async function (inputPath: string) {
   console.log(highScore);
   // Part 2
   console.log(goodChairs?.size);
-  console.log(render(lookup, goodChairs, undefined, undefined, seen));
+  if (showFinal) {
+    console.log(render(lookup, goodChairs, undefined, undefined, seen));
+  }
 }
 
 function render(
@@ -71,17 +77,21 @@ async function search(
   end: string,
   lookup: Map<string, P>,
 ) {
-  const stack = [{
+  const heap = new BinaryHeap<
+    { points: number; pos: string; dir: D; visited: Map<string, number> }
+  >((b, a) => b.points - a.points);
+
+  heap.push({
     points: 0,
     pos: start,
     dir: D.E,
     visited: new Map<string, number>(),
-  }];
+  });
   const seen = new Set<string>();
   let highScore = 0;
   let goodChairs = new Set<string>();
-  while (stack.length) {
-    const cur = stack.pop();
+  while (heap.length) {
+    const cur = heap.pop();
     assert(cur);
     const { points, pos, dir } = cur;
     const visited = new Map(cur.visited);
@@ -101,7 +111,7 @@ async function search(
     }
 
     if (seen.has(str)) {
-      stack.forEach((item) => {
+      heap.toArray().forEach((item) => {
         const history = item.visited.get(str);
         if (history !== points) return;
         item.visited = new Map([...item.visited, ...visited]);
@@ -110,9 +120,11 @@ async function search(
     }
     seen.add(str);
 
-    // const output = render(lookup, new Set(visited.keys()), pos, dir, seen);
-    // console.log(output);
-    // await sleep(0.2);
+    if (showProgress) {
+      const output = render(lookup, new Set(visited.keys()), pos, dir, seen);
+      console.log(output);
+      await sleep(0.2);
+    }
 
     const [x, y] = pos.split(",").map((v) => parseInt(v));
     assert(x !== undefined && y !== undefined);
@@ -123,7 +135,7 @@ async function search(
       const itemAtPos = lookup.get(newPos);
       const isWall = !itemAtPos || itemAtPos.v === "#";
       if (!isWall) {
-        stack.unshift({ points: points + 1001, pos: newPos, dir: d, visited });
+        heap.push({ points: points + 1001, pos: newPos, dir: d, visited });
       }
     });
 
@@ -134,9 +146,8 @@ async function search(
 
     const isWall = !itemAtPos || itemAtPos.v === "#";
     if (!isWall) {
-      stack.push({ points: points + 1, pos: newPos, dir, visited });
+      heap.push({ points: points + 1, pos: newPos, dir, visited });
     }
-    stack.sort((a, b) => b.points - a.points);
   }
   goodChairs = new Set([...goodChairs].map((v) => v.split(";")[0]));
   return { highScore, goodChairs, seen };
