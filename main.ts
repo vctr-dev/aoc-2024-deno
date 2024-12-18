@@ -1,12 +1,12 @@
-const [day, datasource] = Deno.args;
+const [dayFile, datasource] = Deno.args;
 
-const importPath = `${import.meta.dirname}/src/days/day${day}`;
-const programFile = `${importPath}/main.ts`;
+const [dayOnly, ...parts] = dayFile.split("_");
+const importPath = `${import.meta.dirname}/src/days/${dayOnly}`;
+const programFile = `${importPath}/${parts.length ? parts.join("_") : 1}.ts`;
 const datasourceFile = `${importPath}/${datasource}`;
 // console.table({ programFile, datasourceFile });
 
 const { default: program } = await import(programFile);
-const start = performance.now();
+console.time("Program runtime");
 await program(datasourceFile);
-const end = performance.now();
-console.log("Finished in", (end - start).toFixed(3), "ms");
+console.timeEnd("Program runtime");
