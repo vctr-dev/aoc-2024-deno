@@ -113,18 +113,28 @@ export default async function (inputPath: string) {
 		(((a % 8n) ^ 3n) ^ 5n ^ (a >> ((a % 8n) ^ 3n))) % 8n;
 	const it: bigint[] = [];
 	for (let i = 0n; i < 8n; i++) it.push(i);
+	it.reverse();
 	const ltr = prog.toReversed();
 
-	let trial = [0n];
-	for (const output of ltr) {
-		trial = trial.flatMap((v) => it.map((b) => (v << 3n) + b)).filter((v) => {
-			return formula(v) === BigInt(output);
-		});
+	const stack2 = [{ a: 0n, i: -1 }];
+	let res;
+	while (stack2.length) {
+		const { a, i } = stack2.pop()!;
+		// terminating condition
+		if (i >= 0 && formula(a) !== BigInt(ltr[i])) {
+			continue;
+		}
+		if (i === ltr.length - 1) {
+			res = a;
+			break;
+		}
+
+		stack2.push(...it.map((v) => ({ a: (a << 3n) + v, i: i + 1 })));
 	}
 
 	console.log(
 		'part 2:',
-		trial.toSorted((a, b) => a === 0n ? 0 : (a > b) ? 1 : -1)[0],
+		res,
 	);
 }
 function c2vStr(input: number) {
