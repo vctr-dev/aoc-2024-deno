@@ -1,37 +1,51 @@
 import assert from 'node:assert';
 import { BinaryHeap } from 'https://deno.land/std@0.177.0/collections/binary_heap.ts';
+
 export default async function (inputPath: string) {
 	const input = await Deno.readTextFile(inputPath);
+	const parsed = parseInput(input);
+
 	const isExample = inputPath.includes('example');
 	const limit = isExample ? 12 : 1024;
-	const parsed = parseInput(input).slice(0, limit);
 	const range = isExample ? 6 : 70;
 
-	const start = '0,0';
-	const end = range + ',' + range;
-	const bytes = new Set(parsed);
 	// Part 1
 	// 0 - 70
-	const { points, visited } = search(start, end, bytes, range)!;
-	console.log(render(range, bytes, visited));
-	console.log({ start, end, range, limit });
-	console.log('part 1:', points);
+	console.log(parsed.findIndex((v) => v === '6,1'));
+	const index = findBlockingPixelIndex(limit, input.length - 1, parsed, range)!;
+	console.log('part 2:', parsed[index]);
 	// example: 0-6
 	// Part 2
 }
-function render(sides: number, map: Set<string>, visited: string[]) {
-	const vis = new Set(visited);
-	const lines = [];
-	for (let y = 0; y <= sides; y++) {
-		const line = [];
-		for (let x = 0; x <= sides; x++) {
-			line.push(
-				map.has(x + ',' + y) ? '#' : vis.has(x + ',' + y) ? 'O' : '.',
-			);
+function findBlockingPixelIndex(
+	startIndex: number,
+	endIndex: number,
+	fullMap: string[],
+	side: number,
+) {
+	const startC = '0,0';
+	const endC = side + ',' + side;
+	let startI = startIndex;
+	let endI = endIndex;
+	while (true) {
+		const curI = Math.ceil((endI - startI) / 2) + startI;
+		// terminating conditions
+		if (curI === endI) {
+			return curI;
 		}
-		lines.push(line.join(''));
+
+		const map = new Set(fullMap.slice(0, curI + 1));
+		const res = search(startC, endC, map, side);
+		const isFound = !!res;
+		console.log({ startI, endI, curI, isFound });
+		if (isFound) {
+			// select right
+			startI = curI;
+		} else {
+			// select left
+			endI = curI;
+		}
 	}
-	return lines.join('\n');
 }
 
 function search(start: string, end: string, map: Set<string>, sides: number) {
