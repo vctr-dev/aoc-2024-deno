@@ -1,9 +1,13 @@
 {
-  "tasks": {
-    "dev": {
-      "description": "Runs day xx with input|example.\nUsage: `deno run dev <xx> <input|example>`",
-      "command": "deno run --watch --allow-env --allow-read ./main.ts"
-    }
-  },
-  "imports": {}
+	"tasks": {
+		"dev": {
+			"description": "Runs day xx with input|example.\nUsage: `deno run dev <xx> <input|example>`",
+			"command": "deno run --watch --allow-env --allow-read ./main.ts"
+		}
+	},
+	"imports": {},
+	"fmt": {
+		"useTabs": true,
+		"singleQuote": true
+	}
 }
