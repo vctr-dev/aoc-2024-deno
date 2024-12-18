@@ -11,7 +11,6 @@ export default async function (inputPath: string) {
 
 	// Part 1
 	// 0 - 70
-	console.log(parsed.findIndex((v) => v === '6,1'));
 	const index = findBlockingPixelIndex(limit, input.length - 1, parsed, range)!;
 	console.log('part 2:', parsed[index]);
 	// example: 0-6
@@ -27,17 +26,23 @@ function findBlockingPixelIndex(
 	const endC = side + ',' + side;
 	let startI = startIndex;
 	let endI = endIndex;
+	const visited: Set<string>[] = [];
 	while (true) {
 		const curI = Math.ceil((endI - startI) / 2) + startI;
 		// terminating conditions
 		if (curI === endI) {
 			return curI;
 		}
-
 		const map = new Set(fullMap.slice(0, curI + 1));
-		const res = search(startC, endC, map, side);
-		const isFound = !!res;
-		console.log({ startI, endI, curI, isFound });
+		let isFound;
+		if (visited.find((v) => v.isDisjointFrom(map))) {
+			isFound = true;
+		} else {
+			const res = search(startC, endC, map, side);
+			isFound = !!res;
+			res && visited.push(new Set(res.visited));
+		}
+
 		if (isFound) {
 			// select right
 			startI = curI;
@@ -56,6 +61,7 @@ function search(start: string, end: string, map: Set<string>, sides: number) {
 	const seen = new Set<string>();
 	while (heap.length) {
 		const { pos, points, visited } = heap.pop()!;
+
 		const [x, y] = pos.split(',').map((v) => parseInt(v));
 		assert(x !== undefined && y !== undefined);
 		// term
