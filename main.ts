@@ -1,8 +1,8 @@
 const [dayFile, datasource] = Deno.args;
 
-const [dayOnly, ...parts] = dayFile.split('_');
+const [dayOnly, ...parts] = dayFile.split('-');
 const importPath = `${import.meta.dirname}/src/days/${dayOnly}`;
-const programFile = `${importPath}/${parts.length ? parts.join('_') : 1}.ts`;
+const programFile = `${importPath}/${parts.length ? parts.join('-') : 1}.ts`;
 const datasourceFile = `${importPath}/${datasource}`;
 // console.table({ programFile, datasourceFile });
 
