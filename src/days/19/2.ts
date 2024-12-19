@@ -23,18 +23,18 @@ function search(resources: string[], p: string) {
 	});
 
 	// Find num paths
-	const numPathsToNode = new Map<number, number>([[0, 1]]);
+	const numPathsToNode = [1];
 	for (let src = 0; src < p.length; src++) {
-		const numPathsToSrc = numPathsToNode.get(src);
+		const numPathsToSrc = numPathsToNode[src];
 		if (!numPathsToSrc) continue;
 
 		(connections.get(src) ?? []).forEach((dest) => {
-			const numPathsToDest = numPathsToNode.get(dest) ?? 0;
-			numPathsToNode.set(dest, numPathsToDest + numPathsToSrc);
+			const numPathsToDest = numPathsToNode[dest] ?? 0;
+			numPathsToNode[dest] = numPathsToDest + numPathsToSrc;
 		});
 	}
 	// Num nodes to EOF node (past the end of string)
-	return numPathsToNode.get(p.length);
+	return numPathsToNode[p.length];
 }
 
 function parseInput(input: string) {
