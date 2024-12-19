@@ -4,9 +4,6 @@ export default async function (inputPath: string) {
 	let sum = 0;
 	patterns.forEach((p) => sum += search(resources, p) || 0);
 	console.log(sum);
-	// console.log(search(resources, 'gbbr'));
-	// const res = sum(parsed.patterns.map((p) => search(atomicResources, p)));
-	// console.log(res);
 }
 
 function search(resources: string[], p: string) {
