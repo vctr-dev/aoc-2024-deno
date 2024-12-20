@@ -1,4 +1,5 @@
-import { zip } from 'jsr:@std/collections';
+import { distinctBy } from 'jsr:@std/collections';
+
 import { BinaryHeap } from 'https://deno.land/std@0.177.0/collections/binary_heap.ts';
 
 type Point = { x: number; y: number; v?: string; str: string };
@@ -32,19 +33,27 @@ function findCheat(
 		const dests = findDest(po, mapSet);
 		// console.log({ dests });
 		const ps = dests
-			.map((d) => ({ srcPt, destPt: d.str, p: pointsLookup.get(d.str) }))
+			.map((d) => ({
+				d,
+				s: po,
+				srcPt,
+				destPt: d.str,
+				p: pointsLookup.get(d.str),
+			}))
 			.filter((d) => d.p)
-			.map((d) => ({ ...d, p: d.p! - srcP - 2 }))
-			.filter((d) => d.p > 0);
+			.map((d) => {
+				const distance = Math.abs(d.d.x - d.s.x) + Math.abs(d.d.y - d.s.y);
+				return { ...d, p: d.p! - srcP - distance };
+			})
+			.filter((d) => d.p >= 100);
 		col.push(...ps);
 	});
+	const res = distinctBy(
+		col,
+		(v) => [v.srcPt, v.destPt].join(';'),
+	);
 	console.log(
-		new Set(
-			col
-				.filter((v) => v.p >= 100)
-				.toSorted((a, b) => a.p - b.p)
-				.map((v) => [v.p, v.srcPt, v.destPt].join(',')),
-		).size,
+		res.length,
 	);
 
 	// For each wall, have we seen the wall before? if yes, ignore
@@ -60,12 +69,20 @@ function findCheat(
 }
 
 function findDest(p: Point, map: Set<string>) {
-	const near = genDir(p, 1);
-	const far = genDir(p, 2);
-	const points = zip(near, far);
-	return points
-		.filter(([n, f]) => !map.has(n.str) && map.has(f.str))
-		.map(([_n, f]) => f);
+	const grid: Point[] = [];
+	const dist = 20;
+	for (let x = -dist; x < dist + 1; x++) {
+		const minY = -(dist - Math.abs(x));
+		const maxY = dist - Math.abs(x);
+		for (let y = minY; y < maxY + 1; y++) {
+			const newPoint = { x: p.x + x, y: p.y + y, str: '' };
+			newPoint.str = getStr(newPoint.x, newPoint.y);
+			if (map.has(newPoint.str)) {
+				grid.push(newPoint);
+			}
+		}
+	}
+	return grid;
 }
 
 function search(start: Point, end: Point, map: Set<string>) {
