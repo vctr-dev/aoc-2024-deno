@@ -1,4 +1,4 @@
-import { slidingWindows, sumOf, zip } from 'jsr:@std/collections';
+import { minOf, slidingWindows, sumOf, zip } from 'jsr:@std/collections';
 import { BinaryHeap } from 'jsr:@std/data-structures';
 
 BinaryHeap;
@@ -75,50 +75,47 @@ const dirPad = Map.groupBy(
 export default async function (inputPath: string) {
 	const input = await Deno.readTextFile(inputPath);
 	const parsed = parseInput(input);
-	const moves = parsed.map((numPadInput) => {
-		const numMoves = slidingWindows(['A', ...numPadInput], 2).map(
-			([initialNumPadState, nextNumPadState]) => {
-				const potentialDInputs = search(
-					initialNumPadState,
-					nextNumPadState,
-					numPad,
-				)
-					.map((v) => [...v, 'A']);
-				const dMoves = potentialDInputs.map((dInputs) => {
-					const rMoves = slidingWindows(['A', ...dInputs], 2).map(
-						([initialDState, nextDState]) => {
-							const potentialRInputs = search(
-								initialDState,
-								nextDState,
-								dirPad,
-							).map((v) => [...v, 'A']);
-							const hMoves = potentialRInputs.map((rInputs) => {
-								let numMoves = 0;
-								slidingWindows(['A', ...rInputs], 2).forEach(
-									([initialRState, nextRState]) => {
-										const potentialHumanInput = search(
-											initialRState,
-											nextRState,
-											dirPad,
-										).map((v) => [...v, 'A']).shift()!;
-										numMoves += potentialHumanInput.length;
-									},
-								);
-								return numMoves;
-							});
-							return Math.min(...hMoves);
-						},
-					);
-					const numMoves = sumOf(rMoves, (v) => v);
-					return numMoves;
+	const numDPads = 25;
+	const moves = parsed
+		.map((numPadInput) => {
+			const numMoves = slidingWindows(['A', ...numPadInput], 2)
+				.map(([initialNumPadState, nextNumPadState]) => {
+					const potentialDInputs = search(
+						initialNumPadState,
+						nextNumPadState,
+						numPad,
+					).map((v) => [...v, 'A']);
+					return smallestMoves(potentialDInputs, numDPads - 1);
 				});
-				return Math.min(...dMoves);
-			},
-		);
-		return sumOf(numMoves, (v) => v);
-	});
+			return sumOf(numMoves, (v) => v);
+		});
 	const res = zip(parsed, moves);
 	console.log(sumOf(res, (v) => parseInt(v[0].join('')) * v[1]));
+}
+
+const smallestMovesCache = new Map<string, number>();
+function smallestMoves(desiredOutput: Node['s'][][], depth: number): number {
+	const movesLengths = desiredOutput.map((output) => {
+		const cacheKey = output.join('') + depth;
+		const cacheResult = smallestMovesCache.get(cacheKey);
+		if (cacheResult) return cacheResult;
+
+		const m = slidingWindows(['A', ...output], 2)
+			.map(([initial, next]) => {
+				return search(initial, next, dirPad).map((v) => [...v, 'A']);
+			}).map((inputs) => {
+				// Termination condition
+				if (depth <= 0) {
+					return inputs.map((v) => v.length)[0];
+				}
+				return smallestMoves(inputs, depth - 1);
+			});
+		const res = sumOf(m, (m) => m);
+
+		smallestMovesCache.set(cacheKey, res);
+		return res;
+	});
+	return Math.min(...movesLengths);
 }
 
 const searchCache = new Map<string, ReturnType<typeof search>>();
