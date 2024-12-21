@@ -27,11 +27,9 @@ function findCheat(
 	const col: { p: number; srcPt: string; destPt: string }[] = [];
 	noCheatPath.forEach(([srcPt, srcP]) => {
 		// For each point on the path, list the surrounding jumpable wall
-		// console.log(point, p);
 		const [x, y] = srcPt.split(',').map((v) => parseInt(v));
 		const po: Point = { x, y, str: srcPt };
 		const dests = findDest(po, mapSet);
-		// console.log({ dests });
 		const ps = dests
 			.map((d) => ({
 				d,
@@ -42,8 +40,7 @@ function findCheat(
 			}))
 			.filter((d) => d.p)
 			.map((d) => {
-				const distance = Math.abs(d.d.x - d.s.x) + Math.abs(d.d.y - d.s.y);
-				return { ...d, p: d.p! - srcP - distance };
+				return { ...d, p: d.p! - srcP - d.d.dist };
 			})
 			.filter((d) => d.p >= 100);
 		col.push(...ps);
@@ -69,16 +66,17 @@ function findCheat(
 }
 
 function findDest(p: Point, map: Set<string>) {
-	const grid: Point[] = [];
+	const grid: (Point & { dist: number })[] = [];
 	const dist = 20;
 	for (let x = -dist; x < dist + 1; x++) {
 		const minY = -(dist - Math.abs(x));
 		const maxY = dist - Math.abs(x);
 		for (let y = minY; y < maxY + 1; y++) {
 			const newPoint = { x: p.x + x, y: p.y + y, str: '' };
+			const d = Math.abs(x) + Math.abs(y);
 			newPoint.str = getStr(newPoint.x, newPoint.y);
 			if (map.has(newPoint.str)) {
-				grid.push(newPoint);
+				grid.push({ ...newPoint, dist: d });
 			}
 		}
 	}
