@@ -1,7 +1,6 @@
 import { slidingWindows, sumOf, zip } from 'jsr:@std/collections';
 import { BinaryHeap } from 'jsr:@std/data-structures';
 
-BinaryHeap;
 enum D {
 	U = '^',
 	D = 'v',

@@ -1,7 +1,6 @@
-import { minOf, slidingWindows, sumOf, zip } from 'jsr:@std/collections';
+import { slidingWindows, sumOf, zip } from 'jsr:@std/collections';
 import { BinaryHeap } from 'jsr:@std/data-structures';
 
-BinaryHeap;
 enum D {
 	U = '^',
 	D = 'v',
@@ -93,7 +92,7 @@ export default async function (inputPath: string) {
 	console.log(sumOf(res, (v) => parseInt(v[0].join('')) * v[1]));
 }
 
-const smallestMovesCache = new Map<string, number>();
+const smallestMovesCache = new Map<string, ReturnType<typeof smallestMoves>>();
 function smallestMoves(desiredOutput: Node['s'][][], depth: number): number {
 	const movesLengths = desiredOutput.map((output) => {
 		const cacheKey = output.join('') + depth;
