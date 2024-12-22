@@ -1,4 +1,4 @@
-import { distinct, maxOf, slidingWindows } from 'jsr:@std/collections';
+import { maxOf, slidingWindows } from 'jsr:@std/collections';
 
 export default async function (inputPath: string) {
 	const input = await Deno.readTextFile(inputPath);
