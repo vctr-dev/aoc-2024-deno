@@ -4,17 +4,13 @@ export default async function (inputPath: string) {
 	const input = await Deno.readTextFile(inputPath);
 	const parsed = parseInput(input);
 	const c = parsed.map((v) => {
-		let sn = v;
-		let prev = undefined;
-		const changes = [];
-		for (let i = 0; i < 2000; i++) {
-			prev = sn;
-			const nextSn = next(sn);
-			const change = nextSn % 10n - prev % 10n;
-			sn = nextSn;
-			changes.push({ price: nextSn % 10n, change });
-		}
-		return changes;
+		let prevPrice, sn = v;
+		return Array.from({ length: 2000 }, () => {
+			prevPrice = sn % 10n;
+			sn = next(sn);
+			const price = sn % 10n;
+			return { price, change: price - prevPrice };
+		});
 	});
 
 	const acc = new Map<string, bigint>();
@@ -22,9 +18,10 @@ export default async function (inputPath: string) {
 		const seen = new Set<string>();
 		slidingWindows(v, 4).forEach((win) => {
 			const series = win.map((s) => s.change).join(',');
-			if (seen.has(series)) return;
-			seen.add(series);
-			acc.set(series, (acc.get(series) ?? 0n) + win[3].price);
+			if (!seen.has(series)) {
+				seen.add(series);
+				acc.set(series, (acc.get(series) ?? 0n) + win[3].price);
+			}
 		});
 	});
 	console.log(maxOf(acc.values(), (v) => v));
