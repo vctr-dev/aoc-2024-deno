@@ -18,24 +18,16 @@ export default async function (inputPath: string) {
 	});
 
 	const acc = new Map<string, bigint>();
-	c.map((v) => (getSeriesMap(v))).forEach((v) => {
-		v.forEach(([series, val]) => {
-			acc.set(series, (acc.get(series) ?? 0n) + val);
+	c.forEach((v) => {
+		const seen = new Set<string>();
+		slidingWindows(v, 4).forEach((win) => {
+			const series = win.map((s) => s.change).join(',');
+			if (seen.has(series)) return;
+			seen.add(series);
+			acc.set(series, (acc.get(series) ?? 0n) + win[3].price);
 		});
 	});
 	console.log(maxOf(acc.values(), (v) => v));
-}
-
-function getSeriesMap(v: { price: bigint; change: bigint }[]) {
-	const res: [string, bigint][] = [];
-	const seen = new Set<string>();
-	slidingWindows(v, 4).forEach((win) => {
-		const str = win.map((s) => s.change).join(',');
-		if (seen.has(str)) return;
-		seen.add(str);
-		res.push([str, win[3].price]);
-	});
-	return res;
 }
 
 function next(prev: bigint) {
