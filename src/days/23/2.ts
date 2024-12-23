@@ -47,7 +47,7 @@ function findLargestCluster(
 			});
 		});
 
-		last = cur;
+		if (last.cluster.length < cur.cluster.length) last = cur;
 	}
 }
 
